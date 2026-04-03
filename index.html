@@ -505,7 +505,7 @@
     btn.innerHTML = '<span class="spinner-inline"></span>Sending…';
     showStatus('Sending your reservation…', 'sending');
 
-    if (APPS_SCRIPT_URL === 'YOUR_APPS_SCRIPT_WEB_APP_URL') {
+    if (APPS_SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbzlm4sGhi3w_SUOVaFPnvWycEih8S-xYNh-8YgShcRTlZGfRPmdl488ScoyBLZsk2cu/exec') {
       setTimeout(() => {
         btn.disabled = false; btn.textContent = 'Confirm Reservation →';
         showStatus('✓ Demo mode: In production this creates a Google Calendar event and sends a confirmation email to ' + email, 'success');
