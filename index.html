@@ -390,7 +390,7 @@
   ══════════════════════════════════════════════════════════════
 -->
 <script>
-  const APPS_SCRIPT_URL = 'YOUR_APPS_SCRIPT_WEB_APP_URL';
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxRx1pqWFrZ5PZZrLTP4ni_QVOyNSumxui74GWepPc-ztSmTRE4uFOIfqDAG28kztuC/exec';
 </script>
 
 
@@ -463,10 +463,8 @@
 
   /* ── Fetch events from Apps Script ── */
   function fetchEvents() {
-    if (APPS_SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbxRx1pqWFrZ5PZZrLTP4ni_QVOyNSumxui74GWepPc-ztSmTRE4uFOIfqDAG28kztuC/exec') return;
-    fetch(APPS_SCRIPT_URL + '?action=getEvents', {
-  redirect: 'follow'
-})
+    // calendar fetch active
+    fetch(APPS_SCRIPT_URL + '?action=getEvents', { redirect: 'follow' })
       .then(r => r.json())
       .then(data => {
         calEvents = data.events || [];
@@ -507,7 +505,7 @@
     btn.innerHTML = '<span class="spinner-inline"></span>Sending…';
     showStatus('Sending your reservation…', 'sending');
 
-    if (APPS_SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbxRx1pqWFrZ5PZZrLTP4ni_QVOyNSumxui74GWepPc-ztSmTRE4uFOIfqDAG28kztuC/exec') {
+    if (false) {
       setTimeout(() => {
         btn.disabled = false; btn.textContent = 'Confirm Reservation →';
         showStatus('✓ Demo mode: In production this creates a Google Calendar event and sends a confirmation email to ' + email, 'success');
@@ -515,7 +513,7 @@
       return;
     }
 
-    fetch(APPS_SCRIPT_URL, {
+    fetch(APPS_SCRIPT_URL, { redirect: 'follow',
       method: 'POST',
       body: JSON.stringify({ action: 'createReservation', name, email, phone, arrival, departure, rooms, notes }),
     })
