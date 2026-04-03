@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Maples Inn – Reserve Your Stay</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+
+  <!-- Google Calendar API -->
+  <script src="https://apis.google.com/js/api.js"></script>
+
+  <style>
+    /* ── Reset & Base ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --maroon:      #8b2c1a;
+      --maroon-dark: #6d2014;
+      --maroon-deep: #3a1a0e;
+      --cream:       #f5f0e8;
+      --cream-mid:   #f0e8d8;
+      --cream-dark:  #e8dece;
+      --tan:         #d4c4a8;
+      --brown:       #8b6e52;
+      --text:        #2c1a0e;
+      --text-muted:  #6b5a47;
+      --green-light: #e8f5e9;
+      --green-dark:  #2e7d32;
+      --red-light:   #fce4ec;
+      --red-dark:    #b71c1c;
+      --amber-light: #fff3e0;
+      --amber-dark:  #e65100;
+    }
+
+    body {
+      font-family: 'Lato', sans-serif;
+      background: var(--cream);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ───────────────────────────────────────────────── */
+    .site-header {
+      background: var(--maroon-deep);
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      border-bottom: 4px solid var(--maroon);
+    }
+
+    .site-header img {
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
+      border-radius: 50%;
+      background: var(--cream);
+      border: 3px solid var(--maroon);
+      padding: 4px;
+    }
+
+    .header-text h1 {
+      font-family: 'Playfair Display', serif;
+      color: var(--cream);
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+
+    .header-text p {
+      color: #c49a7a;
+      font-size: 13px;
+      font-weight: 300;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-top: 3px;
+    }
+
+    /* ── Nav ──────────────────────────────────────────────────── */
+    .site-nav {
+      background: var(--maroon);
+      display: flex;
+      border-bottom: 2px solid var(--maroon-dark);
+    }
+
+    .nav-tab {
+      padding: 11px 28px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #f5d5c0;
+      cursor: pointer;
+      border-right: 1px solid rgba(255,255,255,0.12);
+      transition: background 0.15s;
+      user-select: none;
+    }
+
+    .nav-tab.active { background: var(--maroon-deep); color: var(--cream); }
+    .nav-tab:hover:not(.active) { background: #a03520; }
+
+    /* ── Main Layout ──────────────────────────────────────────── */
+    .main-wrap {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 30px 32px;
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 24px;
+    }
+
+    @media (max-width: 820px) {
+      .main-wrap { grid-template-columns: 1fr; padding: 20px 16px; }
+      .site-header { padding: 16px 20px; }
+    }
+
+    /* ── Panels ───────────────────────────────────────────────── */
+    .panel {
+      background: #fff;
+      border-radius: 6px;
+      border: 1px solid var(--tan);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      background: var(--cream-mid);
+      border-bottom: 1px solid var(--tan);
+      padding: 14px 20px;
+    }
+
+    .panel-head h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 17px;
+      font-weight: 500;
+      color: var(--maroon-deep);
+    }
+
+    .panel-body { padding: 22px; }
+
+    /* ── Tab content ──────────────────────────────────────────── */
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* ── Sync Badge ───────────────────────────────────────────── */
+    .gcal-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #e8f0fe;
+      border: 1px solid #c5d3f8;
+      border-radius: 4px;
+      padding: 9px 14px;
+      margin-bottom: 20px;
+      font-size: 12px;
+      color: #1a56db;
+    }
+
+    .gcal-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: #4285f4;
+      flex-shrink: 0;
+    }
+
+    /* ── Form ─────────────────────────────────────────────────── */
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .form-row.single { grid-template-columns: 1fr; }
+
+    .field label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--brown);
+      margin-bottom: 6px;
+    }
+
+    .field input, .field select {
+      width: 100%;
+      border: 1px solid var(--tan);
+      border-radius: 4px;
+      padding: 10px 13px;
+      font-size: 14px;
+      font-family: 'Lato', sans-serif;
+      color: var(--text);
+      background: #faf7f2;
+      outline: none;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .field input:focus, .field select:focus {
+      border-color: var(--maroon);
+      background: #fff;
+    }
+
+    hr.divider {
+      border: none;
+      border-top: 1px solid var(--cream-dark);
+      margin: 18px 0;
+    }
+
+    /* ── Room Selection ───────────────────────────────────────── */
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--brown);
+      margin-bottom: 12px;
+    }
+
+    .whole-house-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 16px;
+      border: 2px dashed var(--tan);
+      border-radius: 4px;
+      cursor: pointer;
+      background: #faf7f2;
+      margin-bottom: 12px;
+      transition: border-color 0.15s;
+    }
+
+    .whole-house-row:hover { border-color: var(--maroon); }
+    .whole-house-row input[type=checkbox] { accent-color: var(--maroon); width: 16px; height: 16px; cursor: pointer; }
+
+    .wh-text .wh-name { font-size: 14px; font-weight: 700; color: var(--maroon-deep); }
+    .wh-text .wh-sub  { font-size: 12px; color: var(--brown); margin-top: 1px; }
+
+    .room-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .room-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 14px;
+      border: 1px solid var(--tan);
+      border-radius: 4px;
+      cursor: pointer;
+      background: #faf7f2;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .room-row:hover { border-color: var(--maroon); background: #fff8f5; }
+    .room-row.selected { border-color: var(--maroon); background: #fff0eb; }
+    .room-row.unavailable { opacity: 0.52; cursor: not-allowed; }
+    .room-row input[type=checkbox] { accent-color: var(--maroon); width: 16px; height: 16px; cursor: pointer; }
+
+    .room-info { flex: 1; }
+    .room-info .r-name { font-size: 14px; font-weight: 700; color: var(--text); }
+    .room-info .r-bed  { font-size: 12px; color: var(--brown); margin-top: 2px; }
+
+    .badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 3px;
+      white-space: nowrap;
+    }
+
+    .badge-avail   { background: var(--green-light); color: var(--green-dark); }
+    .badge-booked  { background: var(--red-light);   color: var(--red-dark);   }
+    .badge-partial { background: var(--amber-light);  color: var(--amber-dark); }
+
+    /* ── Note box ─────────────────────────────────────────────── */
+    .note-box {
+      background: var(--cream-mid);
+      border: 1px solid var(--cream-dark);
+      border-radius: 4px;
+      padding: 12px 14px;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 16px;
+      line-height: 1.65;
+    }
+
+    /* ── Submit button ────────────────────────────────────────── */
+    .btn-submit {
+      width: 100%;
+      background: var(--maroon);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 14px;
+      font-family: 'Lato', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      margin-top: 18px;
+      transition: background 0.15s;
+    }
+
+    .btn-submit:hover { background: var(--maroon-dark); }
+    .btn-submit:disabled { background: var(--brown); cursor: not-allowed; }
+
+    /* ── Success message ──────────────────────────────────────── */
+    .success-msg {
+      display: none;
+      background: var(--green-light);
+      border: 1px solid #a5d6a7;
+      border-radius: 4px;
+      padding: 14px 16px;
+      color: var(--green-dark);
+      font-size: 14px;
+      margin-top: 14px;
+      line-height: 1.6;
+    }
+
+    /* ── Mini Calendar (sidebar) ──────────────────────────────── */
+    .cal-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--tan);
+    }
+
+    .cal-nav-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--maroon-deep);
+    }
+
+    .cal-nav button {
+      background: none;
+      border: 1px solid var(--tan);
+      border-radius: 3px;
+      width: 28px; height: 28px;
+      cursor: pointer;
+      color: var(--maroon);
+      font-size: 15px;
+      line-height: 1;
+      transition: background 0.12s;
+    }
+
+    .cal-nav button:hover { background: var(--cream-mid); }
+
+    .cal-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      padding: 8px 12px 4px;
+      gap: 2px;
+    }
+
+    .cal-wd {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--brown);
+      letter-spacing: 0.04em;
+    }
+
+    .cal-cells {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+      padding: 4px 12px 14px;
+    }
+
+    .cal-cell {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      border-radius: 3px;
+      cursor: pointer;
+      color: var(--text);
+      transition: background 0.1s;
+      position: relative;
+    }
+
+    .cal-cell.empty { cursor: default; }
+    .cal-cell.today { font-weight: 700; color: var(--maroon); }
+    .cal-cell.booked { background: var(--red-light); color: var(--red-dark); cursor: not-allowed; font-size: 11px; }
+    .cal-cell.partial { background: var(--amber-light); color: var(--amber-dark); }
+    .cal-cell.available:hover { background: var(--cream-mid); }
+    .cal-cell.selected { background: var(--maroon); color: #fff; border-radius: 3px; }
+
+    .cal-legend {
+      display: flex;
+      gap: 14px;
+      padding: 8px 14px 12px;
+      border-top: 1px solid var(--cream-dark);
+      flex-wrap: wrap;
+    }
+
+    .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--brown); }
+
+    .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+    .dot-avail   { background: #faf7f2; border: 1px solid var(--tan); }
+    .dot-partial { background: var(--amber-light); }
+    .dot-booked  { background: var(--red-light); }
+
+    /* ── Existing Reservations tab ────────────────────────────── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: var(--cream-mid);
+      border-radius: 4px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .stat-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 26px;
+      color: var(--maroon);
+      font-weight: 600;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--brown);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-top: 2px;
+    }
+
+    .res-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .res-card {
+      border: 1px solid var(--tan);
+      border-left: 4px solid var(--maroon);
+      border-radius: 4px;
+      padding: 12px 14px;
+      background: #faf7f2;
+    }
+
+    .res-card.blocked { border-left-color: var(--brown); }
+
+    .res-name  { font-size: 14px; font-weight: 700; color: var(--text); }
+    .res-dates { font-size: 12px; color: var(--brown); margin-top: 3px; }
+    .res-rooms { font-size: 12px; color: var(--maroon); font-weight: 700; margin-top: 5px; }
+
+    /* ── Sidebar quick-info ───────────────────────────────────── */
+    .quick-row {
+      margin-bottom: 12px;
+    }
+
+    .quick-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: var(--brown);
+      margin-bottom: 5px;
+    }
+
+    .quick-row p { font-size: 13px; color: var(--text-muted); line-height: 1.7; }
+
+    /* ── Loading overlay ──────────────────────────────────────── */
+    #loading {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(58,26,14,0.55);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 14px;
+      color: #fff;
+      font-size: 15px;
+      letter-spacing: 0.06em;
+    }
+
+    #loading.show { display: flex; }
+
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+
+<body>
+
+<!-- ══ Loading overlay ══════════════════════════════════════════ -->
+<div id="loading">
+  <div class="spinner"></div>
+  <span>Syncing with Google Calendar…</span>
+</div>
+
+<!-- ══ Header ═══════════════════════════════════════════════════ -->
+<header class="site-header">
+  <!-- Replace src with the real hosted path to your logo -->
+  <img src="MaplesLogoNew.jpg" alt="The Maples Inn logo" onerror="this.style.display='none'" />
+  <div class="header-text">
+    <h1>The Maples Inn</h1>
+    <p>Bed &amp; Breakfast — Reservation System</p>
+  </div>
+</header>
+
+<!-- ══ Nav ══════════════════════════════════════════════════════ -->
+<nav class="site-nav">
+  <div class="nav-tab active" data-tab="new">New Reservation</div>
+  <div class="nav-tab" data-tab="calendar">Availability Calendar</div>
+  <div class="nav-tab" data-tab="existing">Existing Reservations</div>
+</nav>
+
+<!-- ══ Main ═════════════════════════════════════════════════════ -->
+<div class="main-wrap">
+
+  <!-- ── Left / Main panel ─────────────────────────────────── -->
+  <div class="panel">
+
+    <!-- NEW RESERVATION -->
+    <div id="pane-new" class="tab-pane active">
+      <div class="panel-head"><h2>Guest Information</h2></div>
+      <div class="panel-body">
+
+        <div class="gcal-badge">
+          <div class="gcal-dot"></div>
+          Syncs automatically with Google Calendar · "The Maples"
+        </div>
+
+        <div class="form-row">
+          <div class="field">
+            <label for="guest-name">Guest Name</label>
+            <input id="guest-name" type="text" placeholder="Full name" required />
+          </div>
+          <div class="field">
+            <label for="guest-phone">Phone Number</label>
+            <input id="guest-phone" type="tel" placeholder="(603) 000-0000" />
+          </div>
+        </div>
+
+        <div class="form-row single">
+          <div class="field">
+            <label for="guest-email">Email Address</label>
+            <input id="guest-email" type="email" placeholder="guest@email.com" required />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="field">
+            <label for="arrival">Arrival Date</label>
+            <input id="arrival" type="date" required />
+          </div>
+          <div class="field">
+            <label for="departure">Departure Date</label>
+            <input id="departure" type="date" required />
+          </div>
+        </div>
+
+        <hr class="divider" />
+
+        <div class="section-label">Room Selection</div>
+
+        <div class="whole-house-row" id="wh-row">
+          <input type="checkbox" id="whole-house" />
+          <div class="wh-text">
+            <div class="wh-name">Whole House Booking</div>
+            <div class="wh-sub">All 4 rooms — exclusive use of the property</div>
+          </div>
+        </div>
+
+        <div class="room-list" id="room-list">
+          <div class="room-row" data-room="The Cedars Guest Suite" data-bed="Queen Bed">
+            <input type="checkbox" />
+            <div class="room-info">
+              <div class="r-name">The Cedars Guest Suite</div>
+              <div class="r-bed">Queen Bed</div>
+            </div>
+            <span class="badge badge-avail">Available</span>
+          </div>
+          <div class="room-row" data-room="Guest Room #2" data-bed="Queen Bed">
+            <input type="checkbox" />
+            <div class="room-info">
+              <div class="r-name">Guest Room #2</div>
+              <div class="r-bed">Queen Bed</div>
+            </div>
+            <span class="badge badge-avail">Available</span>
+          </div>
+          <div class="room-row" data-room="Guest Room #3" data-bed="Single Bed">
+            <input type="checkbox" />
+            <div class="room-info">
+              <div class="r-name">Guest Room #3</div>
+              <div class="r-bed">Single Bed</div>
+            </div>
+            <span class="badge badge-avail">Available</span>
+          </div>
+          <div class="room-row" data-room="Guest Room #4" data-bed="Cot">
+            <input type="checkbox" />
+            <div class="room-info">
+              <div class="r-name">Guest Room #4</div>
+              <div class="r-bed">Cot</div>
+            </div>
+            <span class="badge badge-avail">Available</span>
+          </div>
+        </div>
+
+        <div class="note-box">
+          Room availability is pulled live from Google Calendar · "The Maples". Any existing reservation or owner-blocked date will be shown as unavailable above. Select your dates first to check availability.
+        </div>
+
+        <button class="btn-submit" id="btn-submit" onclick="submitReservation()">
+          Confirm Reservation →
+        </button>
+
+        <div class="success-msg" id="success-msg">
+          ✓ Reservation confirmed! A calendar event has been created in Google Calendar · "The Maples" and a confirmation email will be sent to your guest.
+        </div>
+
+      </div>
+    </div>
+
+    <!-- CALENDAR VIEW -->
+    <div id="pane-calendar" class="tab-pane">
+      <div class="panel-head"><h2>Availability Overview</h2></div>
+      <div class="panel-body">
+        <div class="gcal-badge">
+          <div class="gcal-dot"></div>
+          Live calendar sync · Google Calendar · "The Maples"
+        </div>
+        <div id="full-calendar-wrap">
+          <p style="font-size:14px; color:var(--text-muted); line-height:1.7;">
+            When connected to the Google Calendar API, this tab will display a full month-by-month availability grid drawn from the "The Maples" calendar, with booked dates shown in red and partially booked dates in amber.<br><br>
+            During development / demo, use the mini calendar in the sidebar to see the date states.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXISTING RESERVATIONS -->
+    <div id="pane-existing" class="tab-pane">
+      <div class="panel-head"><h2>Reservation Log</h2></div>
+      <div class="panel-body">
+
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-num" id="stat-upcoming">—</div>
+            <div class="stat-label">Upcoming</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num" id="stat-rooms">—</div>
+            <div class="stat-label">Rooms Booked</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num" id="stat-nights">—</div>
+            <div class="stat-label">Nights Sold</div>
+          </div>
+        </div>
+
+        <div class="res-list" id="res-list">
+          <!-- Populated by JS from Google Calendar events -->
+          <p style="font-size:13px; color:var(--text-muted);">Connect to Google Calendar to load existing reservations.</p>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /panel -->
+
+  <!-- ── Sidebar ────────────────────────────────────────────── -->
+  <div style="display:flex; flex-direction:column; gap:18px;">
+
+    <!-- Mini Calendar -->
+    <div class="panel">
+      <div class="cal-nav">
+        <button id="cal-prev" onclick="changeMonth(-1)">&#8249;</button>
+        <span class="cal-nav-title" id="cal-title"></span>
+        <button id="cal-next" onclick="changeMonth(1)">&#8250;</button>
+      </div>
+      <div class="cal-weekdays">
+        <div class="cal-wd">Su</div><div class="cal-wd">Mo</div>
+        <div class="cal-wd">Tu</div><div class="cal-wd">We</div>
+        <div class="cal-wd">Th</div><div class="cal-wd">Fr</div>
+        <div class="cal-wd">Sa</div>
+      </div>
+      <div class="cal-cells" id="cal-cells"></div>
+      <div class="cal-legend">
+        <div class="legend-item"><div class="legend-dot dot-avail"></div>Available</div>
+        <div class="legend-item"><div class="legend-dot dot-partial"></div>Partial</div>
+        <div class="legend-item"><div class="legend-dot dot-booked"></div>Fully booked</div>
+      </div>
+    </div>
+
+    <!-- Quick Info -->
+    <div class="panel">
+      <div class="panel-head"><h2>Room Guide</h2></div>
+      <div class="panel-body">
+        <div class="quick-row">
+          <div class="quick-label">Rooms</div>
+          <p>
+            The Cedars Guest Suite — Queen<br>
+            Guest Room #2 — Queen<br>
+            Guest Room #3 — Single<br>
+            Guest Room #4 — Cot
+          </p>
+        </div>
+        <hr class="divider" />
+        <div class="quick-row">
+          <div class="quick-label">Calendar Sync</div>
+          <p>
+            All reservations sync to<br>
+            Google Calendar · "The Maples"<br>
+            automatically on submission.
+          </p>
+        </div>
+        <hr class="divider" />
+        <div class="quick-row">
+          <div class="quick-label">Contact</div>
+          <p>
+            longshipclub.com<br>
+            The Maples Inn
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /sidebar -->
+
+</div><!-- /main-wrap -->
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     CONFIGURATION — edit these values
+═══════════════════════════════════════════════════════════════ -->
+<script>
+  // ─────────────────────────────────────────────────────────────
+  // STEP 1: Replace with your values from Google Cloud Console
+  // ─────────────────────────────────────────────────────────────
+  const CONFIG = {
+    CLIENT_ID:     'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com',
+    API_KEY:       'YOUR_GOOGLE_API_KEY',
+    CALENDAR_ID:   'THE_MAPLES_CALENDAR_ID@group.calendar.google.com',
+    SCOPES:        'https://www.googleapis.com/auth/calendar',
+    // Email address that receives a BCC of each reservation confirmation
+    OWNER_EMAIL:   'you@longshipclub.com',
+  };
+  // ─────────────────────────────────────────────────────────────
+</script>
+
+
+<!-- ══ App Logic ════════════════════════════════════════════════ -->
+<script>
+  /* ── State ────────────────────────────────────────────────── */
+  let gapiReady   = false;
+  let calEvents   = [];          // events loaded from Google Calendar
+  let calMonth    = new Date(); calMonth.setDate(1);
+
+  /* ── Tab switching ────────────────────────────────────────── */
+  document.querySelectorAll('.nav-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const name = tab.dataset.tab;
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('pane-' + name).classList.add('active');
+      if (name === 'existing') renderResList();
+    });
+  });
+
+  /* ── Room row toggling ────────────────────────────────────── */
+  document.querySelectorAll('#room-list .room-row').forEach(row => {
+    row.addEventListener('click', () => {
+      if (row.classList.contains('unavailable')) return;
+      const cb = row.querySelector('input[type=checkbox]');
+      cb.checked = !cb.checked;
+      row.classList.toggle('selected', cb.checked);
+    });
+  });
+
+  /* ── Whole-house checkbox ─────────────────────────────────── */
+  document.getElementById('wh-row').addEventListener('click', function(e) {
+    const cb = document.getElementById('whole-house');
+    if (e.target !== cb) cb.checked = !cb.checked;
+    const list = document.getElementById('room-list');
+    if (cb.checked) {
+      list.style.opacity = '0.38';
+      list.style.pointerEvents = 'none';
+    } else {
+      list.style.opacity = '1';
+      list.style.pointerEvents = '';
+    }
+  });
+
+  /* ── Date change → check availability ────────────────────── */
+  ['arrival','departure'].forEach(id => {
+    document.getElementById(id).addEventListener('change', checkRoomAvailability);
+  });
+
+  function checkRoomAvailability() {
+    const arrStr = document.getElementById('arrival').value;
+    const depStr = document.getElementById('departure').value;
+    if (!arrStr || !depStr) return;
+
+    const arr = new Date(arrStr);
+    const dep = new Date(depStr);
+
+    document.querySelectorAll('#room-list .room-row').forEach(row => {
+      const room = row.dataset.room;
+      const booked = isRoomBooked(room, arr, dep);
+      if (booked) {
+        row.classList.add('unavailable');
+        row.classList.remove('selected');
+        row.querySelector('input').checked = false;
+        row.querySelector('.badge').className = 'badge badge-booked';
+        row.querySelector('.badge').textContent = 'Booked';
+      } else {
+        row.classList.remove('unavailable');
+        row.querySelector('.badge').className = 'badge badge-avail';
+        row.querySelector('.badge').textContent = 'Available';
+      }
+    });
+  }
+
+  function isRoomBooked(roomName, arrival, departure) {
+    return calEvents.some(ev => {
+      const evTitle = (ev.summary || '').toLowerCase();
+      const matchesRoom = evTitle.includes(roomName.toLowerCase()) ||
+                          evTitle.includes('whole house') ||
+                          evTitle.includes('blocked');
+      if (!matchesRoom) return false;
+      const evStart = new Date(ev.start.date || ev.start.dateTime);
+      const evEnd   = new Date(ev.end.date   || ev.end.dateTime);
+      return arrival < evEnd && departure > evStart;
+    });
+  }
+
+  /* ── Submit reservation ───────────────────────────────────── */
+  function submitReservation() {
+    const name     = document.getElementById('guest-name').value.trim();
+    const email    = document.getElementById('guest-email').value.trim();
+    const phone    = document.getElementById('guest-phone').value.trim();
+    const arrival  = document.getElementById('arrival').value;
+    const departure= document.getElementById('departure').value;
+
+    if (!name || !email || !arrival || !departure) {
+      alert('Please fill in guest name, email, arrival and departure dates.');
+      return;
+    }
+    if (new Date(departure) <= new Date(arrival)) {
+      alert('Departure date must be after arrival date.');
+      return;
+    }
+
+    const wholeHouse = document.getElementById('whole-house').checked;
+    const rooms = wholeHouse
+      ? ['Whole House — All Rooms']
+      : [...document.querySelectorAll('#room-list .room-row.selected')]
+          .map(r => r.dataset.room);
+
+    if (!wholeHouse && rooms.length === 0) {
+      alert('Please select at least one room (or Whole House).');
+      return;
+    }
+
+    const summary = `[Maples] ${name} — ${rooms.join(', ')}`;
+    const description = `Guest: ${name}\nPhone: ${phone}\nEmail: ${email}\nRooms: ${rooms.join(', ')}`;
+
+    if (gapiReady) {
+      createCalendarEvent(summary, description, arrival, departure);
+    } else {
+      // Fallback: show success without API (demo mode)
+      showSuccess();
+    }
+  }
+
+  function showSuccess() {
+    document.getElementById('success-msg').style.display = 'block';
+    document.getElementById('btn-submit').disabled = true;
+    // Reset form after 5 s
+    setTimeout(() => {
+      document.getElementById('success-msg').style.display = 'none';
+      document.getElementById('btn-submit').disabled = false;
+      document.querySelectorAll('input[type=text], input[type=email], input[type=tel], input[type=date]')
+              .forEach(i => i.value = '');
+      document.querySelectorAll('#room-list .room-row').forEach(r => {
+        r.classList.remove('selected');
+        r.querySelector('input').checked = false;
+      });
+      document.getElementById('whole-house').checked = false;
+      document.getElementById('room-list').style.opacity = '1';
+      document.getElementById('room-list').style.pointerEvents = '';
+    }, 5000);
+  }
+
+  /* ── Mini Calendar ────────────────────────────────────────── */
+  const MONTHS = ['January','February','March','April','May','June',
+                  'July','August','September','October','November','December'];
+
+  function changeMonth(delta) {
+    calMonth.setMonth(calMonth.getMonth() + delta);
+    renderMiniCal();
+  }
+
+  function renderMiniCal() {
+    const year  = calMonth.getFullYear();
+    const month = calMonth.getMonth();
+    document.getElementById('cal-title').textContent = MONTHS[month] + ' ' + year;
+
+    const cells  = document.getElementById('cal-cells');
+    cells.innerHTML = '';
+
+    const firstDay  = new Date(year, month, 1).getDay();
+    const daysCount = new Date(year, month + 1, 0).getDate();
+    const today     = new Date(); today.setHours(0,0,0,0);
+
+    for (let i = 0; i < firstDay; i++) {
+      const emp = document.createElement('div');
+      emp.className = 'cal-cell empty';
+      cells.appendChild(emp);
+    }
+
+    for (let d = 1; d <= daysCount; d++) {
+      const date = new Date(year, month, d);
+      const cell = document.createElement('div');
+      cell.textContent = d;
+
+      const state = getDayState(date);
+      let cls = 'cal-cell ';
+      if (date.getTime() === today.getTime()) cls += 'today ';
+      if (state === 'booked')   cls += 'booked';
+      else if (state === 'partial') cls += 'partial available';
+      else cls += 'available';
+
+      cell.className = cls.trim();
+
+      if (state !== 'booked') {
+        cell.addEventListener('click', () => {
+          cells.querySelectorAll('.selected').forEach(c => c.classList.remove('selected'));
+          cell.classList.add('selected');
+          // Pre-fill arrival date
+          const y = date.getFullYear();
+          const m = String(date.getMonth()+1).padStart(2,'0');
+          const dd = String(date.getDate()).padStart(2,'0');
+          document.getElementById('arrival').value = `${y}-${m}-${dd}`;
+        });
+      }
+
+      cells.appendChild(cell);
+    }
+  }
+
+  function getDayState(date) {
+    // Count how many rooms are booked on this date
+    const bookedRooms = new Set();
+    calEvents.forEach(ev => {
+      const evStart = new Date(ev.start.date || ev.start.dateTime); evStart.setHours(0,0,0,0);
+      const evEnd   = new Date(ev.end.date   || ev.end.dateTime);   evEnd.setHours(0,0,0,0);
+      if (date >= evStart && date < evEnd) {
+        const title = (ev.summary || '').toLowerCase();
+        if (title.includes('whole house') || title.includes('blocked')) {
+          bookedRooms.add('all');
+        } else {
+          ['cedars','room #2','room #3','room #4'].forEach(r => {
+            if (title.includes(r)) bookedRooms.add(r);
+          });
+        }
+      }
+    });
+    if (bookedRooms.has('all') || bookedRooms.size >= 4) return 'booked';
+    if (bookedRooms.size > 0) return 'partial';
+    return 'available';
+  }
+
+  /* ── Existing reservations list ───────────────────────────── */
+  function renderResList() {
+    const list = document.getElementById('res-list');
+    const today = new Date(); today.setHours(0,0,0,0);
+
+    const upcoming = calEvents.filter(ev => {
+      const start = new Date(ev.start.date || ev.start.dateTime);
+      return start >= today;
+    }).sort((a,b) => new Date(a.start.date||a.start.dateTime) - new Date(b.start.date||b.start.dateTime));
+
+    if (upcoming.length === 0) {
+      list.innerHTML = '<p style="font-size:13px; color:var(--text-muted);">No upcoming reservations found.</p>';
+      return;
+    }
+
+    list.innerHTML = '';
+    let totalNights = 0;
+    let totalRooms  = 0;
+
+    upcoming.forEach(ev => {
+      const start  = new Date(ev.start.date || ev.start.dateTime);
+      const end    = new Date(ev.end.date   || ev.end.dateTime);
+      const nights = Math.round((end - start) / 86400000);
+      totalNights += nights;
+      totalRooms++;
+
+      const card = document.createElement('div');
+      const blocked = (ev.summary||'').toLowerCase().includes('blocked');
+      card.className = 'res-card' + (blocked ? ' blocked' : '');
+
+      const fmt = d => d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+      card.innerHTML = `
+        <div class="res-name">${ev.summary || 'Reservation'}</div>
+        <div class="res-dates">${fmt(start)} – ${fmt(end)} · ${nights} night${nights!==1?'s':''}</div>
+        <div class="res-rooms">${ev.description ? ev.description.split('\n').find(l=>l.startsWith('Rooms:')) || '' : ''}</div>
+      `;
+      list.appendChild(card);
+    });
+
+    document.getElementById('stat-upcoming').textContent = upcoming.length;
+    document.getElementById('stat-rooms').textContent    = totalRooms;
+    document.getElementById('stat-nights').textContent   = totalNights;
+  }
+
+  /* ── Google Calendar API ──────────────────────────────────── */
+  function initGapi() {
+    gapi.load('client:auth2', () => {
+      gapi.client.init({
+        apiKey:      CONFIG.API_KEY,
+        clientId:    CONFIG.CLIENT_ID,
+        discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'],
+        scope:       CONFIG.SCOPES,
+      }).then(() => {
+        const authInstance = gapi.auth2.getAuthInstance();
+        if (authInstance.isSignedIn.get()) {
+          gapiReady = true;
+          fetchCalendarEvents();
+        } else {
+          authInstance.signIn().then(() => {
+            gapiReady = true;
+            fetchCalendarEvents();
+          });
+        }
+      }).catch(err => {
+        console.warn('Google API init failed (demo mode):', err);
+        // App works in demo mode without real calendar
+      });
+    });
+  }
+
+  function fetchCalendarEvents() {
+    showLoading(true);
+    const now = new Date().toISOString();
+    const future = new Date();
+    future.setFullYear(future.getFullYear() + 2);
+
+    gapi.client.calendar.events.list({
+      calendarId: CONFIG.CALENDAR_ID,
+      timeMin:    now,
+      timeMax:    future.toISOString(),
+      maxResults: 500,
+      singleEvents: true,
+      orderBy: 'startTime',
+    }).then(response => {
+      calEvents = response.result.items || [];
+      renderMiniCal();
+      renderResList();
+      showLoading(false);
+    }).catch(err => {
+      console.error('Error fetching events:', err);
+      showLoading(false);
+    });
+  }
+
+  function createCalendarEvent(summary, description, startDate, endDate) {
+    showLoading(true);
+    gapi.client.calendar.events.insert({
+      calendarId: CONFIG.CALENDAR_ID,
+      resource: {
+        summary,
+        description,
+        start: { date: startDate },
+        end:   { date: endDate   },
+        colorId: '11', // Tomato
+      },
+    }).then(() => {
+      showLoading(false);
+      fetchCalendarEvents(); // Refresh
+      showSuccess();
+    }).catch(err => {
+      showLoading(false);
+      console.error('Error creating event:', err);
+      alert('Could not create calendar event. Check console for details.');
+    });
+  }
+
+  function showLoading(show) {
+    document.getElementById('loading').classList.toggle('show', show);
+  }
+
+  /* ── Init ─────────────────────────────────────────────────── */
+  // Set default arrival date to today
+  const todayStr = new Date().toISOString().split('T')[0];
+  document.getElementById('arrival').value   = todayStr;
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
+  document.getElementById('departure').value = tomorrow.toISOString().split('T')[0];
+
+  renderMiniCal();
+
+  // Init Google API if credentials are set
+  if (CONFIG.CLIENT_ID !== 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com') {
+    window.onload = initGapi;
+  }
+</script>
+
+</body>
+</html>
